@@ -11,7 +11,6 @@ waypoint_generator = waypoint_generator(convert_waypoints(waypoints),convert_obs
 path = waypoint_generator.generate_waypoints()
 
 for obstacle in obstacles:
-    print((obstacle[0],obstacle[1]))
     circle = plt.Circle((obstacle[0],obstacle[1]),obstacle[2],fill=False)
     plt.gca().add_artist(circle)
 

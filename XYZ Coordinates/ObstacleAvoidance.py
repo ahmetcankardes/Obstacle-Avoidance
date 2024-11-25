@@ -83,134 +83,133 @@ class waypoint_generator:
             radius = radius
 
         return radius
-
-    def find_new_point_for_one_intersection(self, obstacle_center_coords, intersection, safe_distance, wp1, wp2):
-        degree_radian = self.point_angle_(obstacle_center_coords, intersection)
-        degree = math.degrees(degree_radian)
-        if 0 <= degree <= 90:
-            new_point_x = intersection[0] + (safe_distance * math.cos(math.radians(degree)))
-            new_point_y = intersection[1] + (safe_distance * math.sin(math.radians(degree)))
-            new_point = (new_point_x, new_point_y)
-        elif 90 <= degree <= 180:
-            new_point_x = intersection[0] - (safe_distance * math.cos(math.radians(180 - degree)))
-            new_point_y = intersection[1] + (safe_distance * math.sin(math.radians(180 - degree)))
-            new_point = (new_point_x, new_point_y)
-        elif -180 <= degree <= -90:
-            new_point_x = intersection[0] - (safe_distance * math.cos(math.radians(180 + degree)))
-            new_point_y = intersection[1] - (safe_distance * math.sin(math.radians(180 + degree)))
-            new_point = (new_point_x, new_point_y)
-
-        elif -90 <= degree <= 0:
-            new_point_x = intersection[0] + (safe_distance * math.cos(-math.radians(degree)))
-            new_point_y = intersection[1] - (safe_distance * math.sin(-math.radians(degree)))
-            new_point = (new_point_x, new_point_y)
-
-        shapely_path = LineString([wp1, new_point, wp2])
-        path_and_new_point = (shapely_path, new_point)
-        return path_and_new_point
-
-    def find_new_point_for_two_intersection(self, obstacle_center_coords, intersection_midpoint, obstalce_radius, safe_distance, wp1, wp2):
-        degree_radian = self.point_angle_(obstacle_center_coords, intersection_midpoint)
-        degree = math.degrees(degree_radian)
-        distance_from_center = obstalce_radius + safe_distance
-        if 0 <= degree <= 90:
-            new_point_x = obstacle_center_coords[0] + (distance_from_center * math.cos(math.radians(degree)))
-            new_point_y = obstacle_center_coords[1] + (distance_from_center * math.sin(math.radians(degree)))
-            new_point = (new_point_x, new_point_y)
-        elif 90 <= degree <= 180:
-            new_point_x = obstacle_center_coords[0] - (distance_from_center * math.cos(math.radians(180 - degree)))
-            new_point_y = obstacle_center_coords[1] + (distance_from_center * math.sin(math.radians(180 - degree)))
-            new_point = (new_point_x, new_point_y)
-        elif -180 <= degree <= -90:
-            new_point_x = obstacle_center_coords[0] - (distance_from_center * math.cos(math.radians(180 + degree)))
-            new_point_y = obstacle_center_coords[1] - (distance_from_center * math.sin(math.radians(180 + degree)))
-            new_point = (new_point_x, new_point_y)
-        elif -90 <= degree <= 0:
-            new_point_x = obstacle_center_coords[0] + (distance_from_center * math.cos(-math.radians(degree)))
-            new_point_y = obstacle_center_coords[1] - (distance_from_center * math.sin(-math.radians(degree)))
-            new_point = (new_point_x, new_point_y)
-
-        shapely_path = LineString([wp1, new_point, wp2])
-        path_and_new_point = (shapely_path, new_point)
-        return path_and_new_point
-
-# Checks whether there is an obstacle between two waypoints. If it there, finds a safe point
-    def find_intersection(self, wp1, wp2):
-        new_point = 0
-        center_coords = 0
-        line = LineString([wp1, wp2])
-        for obstacle in self.obstacles:
-            intersection1 = line.intersection(obstacle)
-            distance = self.find_safe_distance_for_obstacles(obstacle)
-            if intersection1.is_empty:
-                path = line
-
-            elif len(list(intersection1.coords)) == 1:
-                list_intersection1 = list(intersection1.coords)
-                intersection1_point = list(list_intersection1[0])
-                list_bounds = list(obstacle.bounds)
-                center = Point([(list_bounds[0] + list_bounds[2]) / 2, (list_bounds[1] + list_bounds[3]) / 2])
-                x = list(center.coords)
-                center_coords = list(x[0])
-                path, new_point = self.find_new_point_for_one_intersection(center_coords, intersection1_point, distance, wp1, wp2,)
-
-            elif len(list(intersection1.coords)) == 2:
-                list_bounds = list(obstacle.bounds)
-                center = Point([(list_bounds[0] + list_bounds[2]) / 2, (list_bounds[1] + list_bounds[3]) / 2])
-                x = list(center.coords)
-                center_coords = list(x[0])
-                radius = self.find_radius(obstacle)
-                list_intersection1 = list(intersection1.coords)
-                intersection1_point1 = list(list_intersection1[0])
-                intersection1_point2 = list(list_intersection1[1])
-                intersection1_mid_point = self.middle_point(intersection1_point1, intersection1_point2)
-                path, new_point = self.find_new_point_for_two_intersection(center_coords, intersection1_mid_point, radius, distance, wp1, wp2)
-
-        path_and_new_points = (path, new_point, center_coords)
-        return path_and_new_points
-
-# This will be used to prevent sharp turns. It finds the mirror point according to the center of obstacle.
+    
+    # This will be used to prevent sharp turns. It finds the mirror point according to the center of obstacle.
     def prevent_sharp_turns(self, safe_point, center):
         new_point = [0, 0]
         new_point[0] = (2 * center[0]) - safe_point[0]
         new_point[1] = (2 * center[1]) - safe_point[1]
         return new_point
 
-# It removes the waypoints inside the obstacles.
-    def boundary_check(self):
-        for waypoint in self.waypoints:
-            for obstacle in self.obstacles:
-                obstacle_bounds = list(obstacle.bounds)
-                if obstacle_bounds[0] <= waypoint[0] <= obstacle_bounds[2] and obstacle_bounds[1] <= waypoint[1] <= obstacle_bounds[3]:
-                    self.waypoints.remove(waypoint)
-                    print("The {wp} point inside the obstacle is removed".format(wp=waypoint))
-                    print("--------------------------------------------")
+    def find_new_point_for_one_intersection(self, obstacle_center_coords, intersection, safe_distance, wp1, wp2):
+        # Calculate the angle between the obstacle center and the intersection point
+        degree_radian = self.point_angle_(obstacle_center_coords, intersection)
+        
+        # Calculate the new point coordinates directly using sine and cosine
+        new_point_x = intersection[0] + (safe_distance * math.cos(degree_radian))
+        new_point_y = intersection[1] + (safe_distance * math.sin(degree_radian))
+        new_point = [new_point_x, new_point_y]
+        
+        # Create the updated path
+        shapely_path = LineString([wp1, new_point, wp2])
+        path_and_new_point = (shapely_path, new_point)
+        return path_and_new_point
+
+    def find_new_point_for_two_intersection(self, obstacle_center_coords, intersection_midpoint, obstacle_radius, safe_distance, wp1, wp2):
+        # Calculate the angle between the obstacle center and the intersection midpoint
+        degree_radian = self.point_angle_(obstacle_center_coords, intersection_midpoint)
+        
+        # Calculate the total distance from the obstacle center to the new point
+        distance_from_center = obstacle_radius + safe_distance
+        
+        # Calculate the new point coordinates directly using sine and cosine
+        new_point_x = obstacle_center_coords[0] + (distance_from_center * math.cos(degree_radian))
+        new_point_y = obstacle_center_coords[1] + (distance_from_center * math.sin(degree_radian))
+        new_point = [new_point_x, new_point_y]
+        
+        # Create the updated path
+        shapely_path = LineString([wp1, new_point, wp2])
+        path_and_new_point = (shapely_path, new_point)
+        return path_and_new_point
+
+    # Updated function to check intersections and handle multiple obstacles
+    def find_intersection(self, wp1, wp2):
+        safe_points = []  # List to store all calculated safe points
+        line = LineString([wp1, wp2])  # Line between the two waypoints
+
+        for obstacle in self.obstacles:
+            intersection_points = line.intersection(obstacle)
+            distance = self.find_safe_distance_for_obstacles(obstacle)
+
+            if intersection_points.is_empty:
+                # No intersection with this obstacle
+                continue
+
+            # Process intersection points iteratively
+            try:
+                intersection_coords = list(intersection_points.coords)
+            except AttributeError:
+                # Handle cases where intersection is not a Point or LineString (e.g., GeometryCollection)
+                print(f"Unhandled intersection type: {intersection_points.geom_type}")
+                continue
+
+            # Iterate through all intersection points
+            for i in range(len(intersection_coords) - 1):
+                if i == 0 and len(intersection_coords) == 1:
+                    # Single intersection (tangential case)
+                    center_coords = list(obstacle.centroid.coords)[0]
+                    path, safe_point = self.find_new_point_for_one_intersection(
+                        center_coords, intersection_coords[0], distance, wp1, wp2
+                    )
+                    safe_points.append(safe_point)
+                elif i + 1 < len(intersection_coords):
+                    # Multiple intersections (general case)
+                    intersection1 = intersection_coords[i]
+                    intersection2 = intersection_coords[i + 1]
+                    midpoint = self.middle_point(intersection1, intersection2)
+                    center_coords = list(obstacle.centroid.coords)[0]
+                    radius = self.find_radius(obstacle)
+                    path, safe_point = self.find_new_point_for_two_intersection(
+                        center_coords, midpoint, radius, distance, wp1, wp2
+                    )
+                    safe_points.append(safe_point)
+
+        # Select the best safe point if there are multiple
+        if len(safe_points) == 0:
+            # If no safe points are found, return the direct path
+            path = line
+            safe_point = 0
+        else:
+            path = LineString([wp1] + safe_points + [wp2])  # Update the path
+
+        return path, safe_points, (center_coords if safe_points else None)
 
     def generate_waypoints(self):
         i = 0
-        x = len(self.waypoints) - 1
-        waypoints = [self.waypoints[0]]
-        while i < x:
-            point1 = self.waypoints[i]
-            point2 = self.waypoints[i + 1]
-            print("Waypoint{a} ve Waypoint{b}:".format(a=i+1,b=i+2))
-            rota, new_point, center = self.find_intersection(point1, point2)
-            if new_point != 0:
-                print("There is an intersection. New point {a} is found".format(a=new_point))
-                print("New point is being checked to prevent sharp turn")
-                symetric_point = self.prevent_sharp_turns(new_point, center)
-                degree1 = self.find_turn_angle(self.waypoints[i - 1], point1, new_point)
-                degree2 = self.find_turn_angle(self.waypoints[i - 1], point1, symetric_point)
-                if degree1 >= degree2:
-                    waypoints.append(new_point)
-                    waypoints.append(point2)
-                    print("There isn't a sharp turn, no need to change")
-                else:
-                    waypoints.append(symetric_point)
-                    waypoints.append(point2)
-                    print("Sharp turn is prevented. New safe point is {a}".format(a=symetric_point))
+        n = len(self.waypoints) - 1
+        updated_waypoints = [self.waypoints[0]]  # Start with the first waypoint
+
+        while i < n:
+            wp1 = self.waypoints[i]
+            wp2 = self.waypoints[i + 1]
+            #print(f"Processing Waypoint {i + 1} and Waypoint {i + 2}:")
+
+            # Check for obstacles and find the best path
+            path, safe_points, center = self.find_intersection(wp1, wp2)
+
+            if len(safe_points) != 0:
+                print(f"Safe points {safe_points} generated.")
+                #print(f"Obstacle detected. Safe point {safe_point} generated.")
+                #print("Checking for sharp turns...")
+                updated_waypoints.extend(safe_points)  # Add the first safe point
+
             else:
-                waypoints.append(point2)
+                # No obstacles detected, add the direct path
+                print("No obstacles detected. Direct path added.")    
+
+            # Add the second waypoint (target waypoint)
+            updated_waypoints.append(wp2)
             print("--------------------------------------------")
             i += 1
-        return waypoints
+
+        # Update the self.waypoints with the new waypoint list
+        self.waypoints = updated_waypoints
+        return updated_waypoints
+
+    # Improved boundary check function
+    def boundary_check(self):
+        self.waypoints = [
+            wp for wp in self.waypoints
+            if all(not obstacle.contains(Point(wp)) for obstacle in self.obstacles)
+        ]
+        print("Waypoints inside obstacles removed.")
