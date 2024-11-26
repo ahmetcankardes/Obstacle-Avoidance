@@ -25,7 +25,7 @@ The algorithm uses **geometric operations** to compute safe points when a path i
    - If an intersection exists, the safe point is calculated based on:
      - **K**: User-defined safe distance.
      - **M**: Distance between the obstacle boundary and the middle point of the path.
-     - **\alpha**: Angle between the obstacle center and the intersection point.
+     - **$(\alpha)$**: Angle between the obstacle center and the intersection point.
    - Safe point formula:
 
     $x = \frac{x_1 + x_2}{2} + [(K + M) \times \sin(\alpha)] \quad$ (1)
@@ -65,15 +65,15 @@ The trajectory optimization problem is formulated as a convex optimization probl
 
 #### Objective:
 Minimize the smoothness cost:
-$$
+$
 \min \sum_{i=2}^{n} (x[i] - 2x[i-1] + x[i-2])^2 + \sum_{i=2}^{n} (y[i] - 2y[i-1] + y[i-2])^2
-$$
+$
 
 #### Constraints:
 1. The trajectory must pass through the given waypoints:
-   $$
+   $
    x[k] = x_{\text{waypoint}}, \, y[k] = y_{\text{waypoint}}
-   $$
+   $
    for waypoint indices $k$.
 
 2. The number of trajectory points is user-defined, ensuring flexibility for different applications.
