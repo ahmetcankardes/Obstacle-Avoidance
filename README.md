@@ -72,7 +72,7 @@ $
 #### Constraints:
 1. The trajectory must pass through the given waypoints:
 
-   $x[k] = x_{\text{waypoint}}, \, y[k] = y_{\text{waypoint}}$
+   $x[k] = x_{\text{waypoint}} \, y[k] = y_{\text{waypoint}}$
    
    for waypoint indices $k$.
 
