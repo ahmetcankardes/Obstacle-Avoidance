@@ -12,7 +12,10 @@ The **Obstacle Avoidance Algorithm** calculates safe waypoints to avoid obstacle
 
 The algorithm uses **geometric operations** to compute safe points when a path intersects an obstacle. The process is described in **Figure 1**.
 
-![Figure 1: Obstacle Avoidance Process](Figures/obstacle.png)
+<p align="center">
+  <img src="Figures/obstacle.png" alt="Figure 1: Obstacle Avoidance Process" width="60%">
+</p>
+<p align="center"><b>Figure 1:</b> Obstacle Avoidance Process</p>
 
 #### Steps:
 1. **Intersection Detection**:
@@ -20,8 +23,8 @@ The algorithm uses **geometric operations** to compute safe points when a path i
 
 2. **Safe Point Calculation**:
    - If an intersection exists, the safe point is calculated based on:
-     - **K**: User-defined safe distance.
-     - **M**: Distance between the obstacle boundary and the middle point of the path.
+     - **\(K\)**: User-defined safe distance.
+     - **\(M\)**: Distance between the obstacle boundary and the middle point of the path.
      - **\(\alpha\)**: Angle between the obstacle center and the intersection point.
    - Safe point formula:
      \[
@@ -50,9 +53,12 @@ The algorithm uses **geometric operations** to compute safe points when a path i
 
 ## Trajectory Optimizer
 
-The **Trajectory Optimizer** generates a smooth and continuous trajectory based on the safe waypoints provided by the Obstacle Avoidance Algorithm. It ensures the trajectory is smooth and interpolates between waypoints according to the desired time resolution. **Figure 2** can be given as an example for that.
+The **Trajectory Optimizer** generates a smooth and continuous trajectory based on the safe waypoints provided by the Obstacle Avoidance Algorithm. It ensures the trajectory is smooth and interpolates between waypoints according to the desired time resolution. **Figure 2** shows an example trajectory.
 
-![Figure 2: Example TrajectoryTrajectory](Figures/trajectory.png)
+<p align="center">
+  <img src="Figures/trajectory.png" alt="Figure 2: Optimized Trajectory" width="70%">
+</p>
+<p align="center"><b>Figure 2:</b> Optimized Trajectory</p>
 
 ### Theory and Formulation
 
@@ -84,6 +90,8 @@ Minimize the smoothness cost:
   - **Positions**: Optimized \(x(t)\) and \(y(t)\) coordinates for all trajectory points.
   - **Time Array**: Corresponding time values for each point in the trajectory.
 
+---
+
 ## Dependencies
 
 - **cvxpy**: For optimization.
@@ -91,13 +99,17 @@ Minimize the smoothness cost:
 - **matplotlib**: For visualization.
 - **numpy**: For numerical operations.
 
-Install dependencies with:
+### Installation
+
+You can install the required dependencies using the following command:
 
 ```bash
 pip install cvxpy shapely matplotlib numpy
 ```
 
-## Extensions
+### Key Updates:
+1. **Figures**: Centered and labeled figures with descriptions below them.
+2. **Equations**: Properly formatted in LaTeX to render cleanly on GitHub.
+3. **Structure**: Made each section visually distinct and consistent for easy reading.
 
-- Add velocity and acceleration constraints to the optimization problem.
-- Incorporate obstacle distance constraints directly into the trajectory generation.
+Let me know if you need further modifications!
