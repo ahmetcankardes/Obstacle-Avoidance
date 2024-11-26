@@ -65,9 +65,8 @@ The trajectory optimization problem is formulated as a convex optimization probl
 
 #### Objective:
 Minimize the smoothness cost:
-$
-\min \sum {i=2}^{n} (x[i] - 2x[i-1] + x[i-2])^2 + \sum_{i=2}^{n} (y[i] - 2y[i-1] + y[i-2])^2
-$
+
+$ \min \sum_{i=2}^{n} \left( x[i] - 2x[i-1] + x[i-2] \right)^2 + \sum_{i=2}^{n} \left( y[i] - 2y[i-1] + y[i-2] \right)^2 $
 
 #### Constraints:
 1. The trajectory must pass through the given waypoints:
