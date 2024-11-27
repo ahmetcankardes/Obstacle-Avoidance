@@ -102,10 +102,3 @@ Install dependencies with:
 ```bash
 pip install cvxpy shapely matplotlib numpy
 ```
-
-### Key Updates:
-1. **Figures**: Centered and labeled figures with descriptions below them.
-2. **Equations**: Properly formatted in LaTeX to render cleanly on GitHub.
-3. **Structure**: Made each section visually distinct and consistent for easy reading.
-
-Let me know if you need further modifications!
