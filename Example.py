@@ -10,14 +10,16 @@ if __name__ == "__main__":
     #obstacles format [(x1,y1,radius1),(x2,y2,radius2),.....]
     obstacles = [(-5,3,1),(1,3,1),(-1,0,0.5),(3,0,2),(-3,-5,1),(3,6,1)]
 
-    waypoint_generator = waypoint_generator(convert_waypoints(waypoints),convert_obstacles_to_shapely(obstacles),1)
+    waypoint_generator = waypoint_generator(convert_waypoints(waypoints),convert_obstacles_to_shapely(obstacles),1,0.5,True)
     path = waypoint_generator.generate_waypoints()
     print("Generated Path:", path)
 
     num_points = 100  # number of points in the trajectory
     time_period = 0.1  # seconds (time step)
+    acceleration_limit = 10.0  # User-defined acceleration limit
+    ensure_continuous_derivative = True  # Enforce continuous first derivative
 
-    optimizer = TrajectoryOptimizer(path, num_points, time_period)
+    optimizer = TrajectoryOptimizer(path, num_points, time_period, acceleration_limit, ensure_continuous_derivative)
     time_array, pos_x, pos_y = optimizer.optimize_trajectory()
 
     print("Optimized X:", pos_x)

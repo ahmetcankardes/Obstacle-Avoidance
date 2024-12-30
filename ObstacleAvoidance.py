@@ -29,11 +29,12 @@ class waypoint_generator:
     # safe_distance should be tuned according to the vehicle. safety_coefficient determines how much you want to take risks.
     # after defining safe_distance for a vehicle, made your changes by using safety_coefficient.
 
-    def __init__(self, waypoints, obstacles, safety_coefficient, safe_distance=0.5):
+    def __init__(self, waypoints, obstacles, safety_coefficient, safe_distance=0.5, turn_angle_check=False):
         self.waypoints = waypoints
         self.obstacles = obstacles
         self.safety_coefficient = safety_coefficient
         self.safe_distance = safe_distance
+        self.turn_angle_check = turn_angle_check
 
 # angle between two points
     def point_angle_(self, point1, point2):
@@ -122,9 +123,9 @@ class waypoint_generator:
         path_and_new_point = (shapely_path, new_point)
         return path_and_new_point
 
-    # Updated function to check intersections and handle multiple obstacles
     def find_intersection(self, wp1, wp2):
         safe_points = []  # List to store all calculated safe points
+        center_coords_list = []  # List to store corresponding obstacle centers
         line = LineString([wp1, wp2])  # Line between the two waypoints
 
         for obstacle in self.obstacles:
@@ -135,7 +136,6 @@ class waypoint_generator:
                 # No intersection with this obstacle
                 continue
 
-            # Process intersection points iteratively
             try:
                 intersection_coords = list(intersection_points.coords)
             except AttributeError:
@@ -143,36 +143,37 @@ class waypoint_generator:
                 print(f"Unhandled intersection type: {intersection_points.geom_type}")
                 continue
 
+            center_coords = list(obstacle.centroid.coords)[0]
+
             # Iterate through all intersection points
             for i in range(len(intersection_coords) - 1):
                 if i == 0 and len(intersection_coords) == 1:
                     # Single intersection (tangential case)
-                    center_coords = list(obstacle.centroid.coords)[0]
                     path, safe_point = self.find_new_point_for_one_intersection(
                         center_coords, intersection_coords[0], distance, wp1, wp2
                     )
                     safe_points.append(safe_point)
+                    center_coords_list.append(center_coords)
                 elif i + 1 < len(intersection_coords):
                     # Multiple intersections (general case)
                     intersection1 = intersection_coords[i]
                     intersection2 = intersection_coords[i + 1]
                     midpoint = self.middle_point(intersection1, intersection2)
-                    center_coords = list(obstacle.centroid.coords)[0]
                     radius = self.find_radius(obstacle)
                     path, safe_point = self.find_new_point_for_two_intersection(
                         center_coords, midpoint, radius, distance, wp1, wp2
                     )
                     safe_points.append(safe_point)
+                    center_coords_list.append(center_coords)
 
         # Select the best safe point if there are multiple
         if len(safe_points) == 0:
             # If no safe points are found, return the direct path
             path = line
-            safe_point = 0
         else:
             path = LineString([wp1] + safe_points + [wp2])  # Update the path
 
-        return path, safe_points, (center_coords if safe_points else None)
+        return path, safe_points, center_coords_list
 
     def generate_waypoints(self):
         i = 0
@@ -182,20 +183,42 @@ class waypoint_generator:
         while i < n:
             wp1 = self.waypoints[i]
             wp2 = self.waypoints[i + 1]
-            #print(f"Processing Waypoint {i + 1} and Waypoint {i + 2}:")
 
             # Check for obstacles and find the best path
-            path, safe_points, center = self.find_intersection(wp1, wp2)
+            path, safe_points, center_coords = self.find_intersection(wp1, wp2)
+            print("Center Coords:", center_coords)
 
             if len(safe_points) != 0:
                 print(f"Safe points {safe_points} generated.")
-                #print(f"Obstacle detected. Safe point {safe_point} generated.")
-                #print("Checking for sharp turns...")
-                updated_waypoints.extend(safe_points)  # Add the first safe point
 
+                if self.turn_angle_check:
+                    # If mirroring is enabled, evaluate the mirrored points
+                    improved_safe_points = []
+                    for sp, center in zip(safe_points, center_coords):
+                        mirrored_point = self.prevent_sharp_turns(sp, center)
+                        
+                        if len(updated_waypoints) >= 2:
+                            prev_wp = updated_waypoints[-1]
+                            prev_prev_wp = updated_waypoints[-2]
+                            
+                            # Calculate turn angles
+                            original_angle = self.find_turn_angle(prev_prev_wp, prev_wp, sp)
+                            mirrored_angle = self.find_turn_angle(prev_prev_wp, prev_wp, mirrored_point)
+
+                            # Prefer the point with a safer (larger) turn angle
+                            if mirrored_angle > original_angle:
+                                improved_safe_points.append(mirrored_point)
+                            else:
+                                improved_safe_points.append(sp)
+                        else:
+                            # If not enough waypoints for angle calculation, default to original safe point
+                            improved_safe_points.append(sp)
+
+                    safe_points = improved_safe_points
+
+                updated_waypoints.extend(safe_points)  # Add the chosen safe points
             else:
-                # No obstacles detected, add the direct path
-                print("No obstacles detected. Direct path added.")    
+                print("No obstacles detected. Direct path added.")
 
             # Add the second waypoint (target waypoint)
             updated_waypoints.append(wp2)
